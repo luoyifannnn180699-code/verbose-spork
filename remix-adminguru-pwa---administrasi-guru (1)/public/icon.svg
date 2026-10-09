@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" rx="128" fill="#1e3a8a"/>
+  <!-- Graduation cap & open book -->
+  <path d="M256 96L72 192L256 288L440 192L256 96Z" fill="#38bdf8"/>
+  <path d="M128 221.2V320C128 320 180 372 256 372C332 372 384 320 384 320V221.2L256 288L128 221.2Z" fill="#60a5fa" opacity="0.9"/>
+  <!-- Tassel -->
+  <path d="M416 204.8V336C408 340 396 352 396 364C396 376 408 384 416 384C424 384 436 376 436 364C436 352 424 340 416 336V204.8" stroke="#facc15" stroke-width="12" stroke-linecap="round" fill="#facc15"/>
+  <!-- Open Book underneath -->
+  <path d="M160 416C196 400 240 404 256 424C272 404 316 400 352 416" stroke="#ffffff" stroke-width="24" stroke-linecap="round"/>
+</svg>

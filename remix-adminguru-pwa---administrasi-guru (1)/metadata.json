@@ -1,0 +1,8 @@
+{
+  "name": "Remix AdminGuru PWA - Administrasi Guru",
+  "description": "Aplikasi PWA offline-first administrasi guru untuk Bank Soal, Prota, Prosem, dan Modul Ajar dengan Dexie.js dan ekspor Word (.docx).",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
