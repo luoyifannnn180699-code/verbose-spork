@@ -11,7 +11,7 @@ export function KamusHskView() {
   const [search, setSearch] = useState<string>('');
 
   useEffect(() => {
-    fetch('/hskVocabulary.json')
+    fetch(import.meta.env.BASE_URL + 'hskVocabulary.json')
       .then((res) => {
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
