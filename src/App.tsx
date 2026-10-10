@@ -155,7 +155,7 @@ export default function App() {
             <span>&bull;</span>
             <span>DeepSeek & AI Gratis</span>
             <span>&bull;</span>
-            <span>GuruPintar AI Asisten</span>
+            <span>Ai 文静 Asisten</span>
             <span>&bull;</span>
             <span>Ekspor Word (.docx)</span>
             <span>&bull;</span>

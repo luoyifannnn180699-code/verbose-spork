@@ -101,7 +101,7 @@ export const AIAssistantView: React.FC<AIAssistantViewProps> = ({
       {
         id: 'welcome-1',
         sender: 'assistant',
-        text: `Halo Bapak/Ibu Guru **${profile?.namaGuru || 'Pendidik'}**! 👋\n\nSaya **GuruPintar AI**, asisten cerdas pedagogi dan Kurikulum Merdeka Anda. Ada yang bisa saya bantu hari ini?\n\nAnda bisa menanyakan penyusunan **Tujuan Pembelajaran (TP)**, ide **Ice Breaking seru**, strategi **Diferensiasi Pembelajaran**, penyusunan **Rubrik Penilaian**, maupun pembuatan **Soal HOTS** kontekstual.`,
+        text: `Halo Bapak/Ibu Guru **${profile?.namaGuru || 'Pendidik'}**! 👋\n\nSaya **Ai 文静**, asisten cerdas pedagogi dan Kurikulum Merdeka Anda. Ada yang bisa saya bantu hari ini?\n\nAnda bisa menanyakan penyusunan **Tujuan Pembelajaran (TP)**, ide **Ice Breaking seru**, strategi **Diferensiasi Pembelajaran**, penyusunan **Rubrik Penilaian**, maupun pembuatan **Soal HOTS** kontekstual.`,
         timestamp: Date.now(),
       },
     ];
@@ -218,7 +218,7 @@ export const AIAssistantView: React.FC<AIAssistantViewProps> = ({
   const handleExportChat = () => {
     const formatted = messages
       .map((m) => {
-        const sender = m.sender === 'user' ? 'Guru' : 'GuruPintar AI';
+        const sender = m.sender === 'user' ? 'Guru' : 'Ai 文静';
         const time = new Date(m.timestamp).toLocaleTimeString('id-ID');
         return `[${time}] ${sender}:\n${m.text}\n\n-------------------------\n`;
       })
@@ -307,7 +307,7 @@ export const AIAssistantView: React.FC<AIAssistantViewProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-lg font-black tracking-tight text-white flex items-center gap-1.5">
-                  GuruPintar AI
+                  Ai 文静
                 </h2>
                 <span className="text-[10px] font-bold uppercase tracking-wider bg-amber-400 text-amber-950 px-2 py-0.5 rounded-full shadow-xs">
                   {AI_PROVIDERS_METADATA[aiCfg.provider]?.badge || 'DeepSeek AI'}
@@ -511,7 +511,7 @@ export const AIAssistantView: React.FC<AIAssistantViewProps> = ({
                 </div>
                 <div className="bg-white border border-slate-200 rounded-2xl rounded-tl-xs p-3.5 shadow-2xs text-xs text-slate-600 flex items-center gap-2.5">
                   <Loader2 className="w-4 h-4 animate-spin text-purple-600" />
-                  <span>GuruPintar AI sedang menyusun jawaban terbaik untuk Anda...</span>
+                  <span>Ai 文静 sedang menyusun jawaban terbaik untuk Anda...</span>
                 </div>
               </div>
             )}

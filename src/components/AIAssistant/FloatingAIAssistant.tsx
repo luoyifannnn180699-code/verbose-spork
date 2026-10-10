@@ -143,7 +143,7 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
         <button
           onClick={() => setIsOpen(true)}
           className="fixed bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-purple-700 via-indigo-600 to-blue-600 text-white rounded-full shadow-xl hover:shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer group border border-white/20"
-          title="Buka AI Asisten Guru (GuruPintar AI)"
+          title="Buka AI Asisten Guru (Ai 文静)"
         >
           <span className="relative flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -165,7 +165,7 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({
               </div>
               <div>
                 <div className="text-xs font-bold leading-tight flex items-center gap-1.5">
-                  <span>GuruPintar AI</span>
+                  <span>Ai 文静</span>
                   <span className="text-[9px] bg-amber-400 text-amber-950 font-black px-1.5 py-0.2 rounded">
                     {AI_PROVIDERS_METADATA[aiCfg.provider]?.badge || 'DeepSeek'}
                   </span>

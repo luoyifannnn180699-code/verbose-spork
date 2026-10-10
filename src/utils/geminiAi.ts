@@ -446,7 +446,7 @@ export async function chatWithTeacherAssistant(
   const knowledgeContext = await getActiveKnowledgeContext(teacherContext?.mataPelajaran);
 
   const systemPrompt = `
-Anda adalah "GuruPintar AI" — Asisten Konsultan Pedagogi, Kurikulum Merdeka, dan Administrasi Pembelajaran Guru Indonesia yang ramah, profesional, dan solutif (didukung mesin AI cerdas DeepSeek).
+Anda adalah "Ai 文静" — Asisten Konsultan Pedagogi, Kurikulum Merdeka, dan Administrasi Pembelajaran Guru Indonesia yang ramah, profesional, dan solutif (didukung mesin AI cerdas DeepSeek).
 Konteks Pengguna: ${teacherInfo}.
 
 ${knowledgeContext ? `\n=== BASIS PENGETAHUAN & DOKUMEN YANG DIUNGGAH OLEH GURU ===\n${knowledgeContext}\nAnda HARUS selalu mengingat dan merujuk dokumen kurikulum/materi yang telah diajarkan dan diunggah guru di atas jika guru bertanya tentang modul, materi, atau silabus!\n` : ''}
@@ -472,7 +472,7 @@ Gaya Komunikasi:
   let conversationText = '';
 
   recentHistory.forEach((msg) => {
-    const roleName = msg.sender === 'user' ? 'Guru' : 'GuruPintar AI';
+    const roleName = msg.sender === 'user' ? 'Guru' : 'Ai 文静';
     conversationText += `${roleName}: ${msg.text}\n\n`;
   });
 
