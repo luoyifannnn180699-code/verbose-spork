@@ -1,8 +1,13 @@
 import mammoth from 'mammoth';
+import * as pdfjsLib from 'pdfjs-dist';
 import { db, type DokumenReferensiItem } from '../db';
 
+// Set worker PDF.js dari CDN
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
 /**
- * Parse file teks (seperti .txt, .md, .markdown) langsung menggunakan Browser File API (file.text() atau FileReader)
+ * Parse file teks (.txt, .md, .markdown) via Browser File API
  */
 export async function parseTextDocumentViaFileAPI(file: File): Promise<{
   text: string;
@@ -15,7 +20,6 @@ export async function parseTextDocumentViaFileAPI(file: File): Promise<{
 }> {
   let rawText = '';
 
-  // 1. Coba browser File API modern file.text()
   if (typeof file.text === 'function') {
     try {
       rawText = await file.text();
@@ -24,7 +28,6 @@ export async function parseTextDocumentViaFileAPI(file: File): Promise<{
     }
   }
 
-  // 2. Fallback menggunakan FileReader API
   if (!rawText) {
     rawText = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
@@ -32,7 +35,7 @@ export async function parseTextDocumentViaFileAPI(file: File): Promise<{
         resolve((event.target?.result as string) || '');
       };
       reader.onerror = () => {
-        reject(new Error(`Gagal membaca file ${file.name} melalui browser FileReader API.`));
+        reject(new Error(`Gagal membaca file ${file.name}.`));
       };
       reader.readAsText(file, 'UTF-8');
     });
@@ -40,7 +43,7 @@ export async function parseTextDocumentViaFileAPI(file: File): Promise<{
 
   const trimmed = rawText.trim();
   if (!trimmed) {
-    throw new Error(`File ${file.name} kosong atau tidak memiliki teks yang dapat diparse.`);
+    throw new Error(`File ${file.name} kosong.`);
   }
 
   const sizeKb = Math.round(file.size / 1024);
@@ -49,8 +52,6 @@ export async function parseTextDocumentViaFileAPI(file: File): Promise<{
   const charCount = trimmed.length;
   const wordCount = trimmed.split(/\s+/).filter(Boolean).length;
   const lineCount = trimmed.split(/\r\n|\r|\n/).length;
-
-  // Cek keberadaan karakter Hanzi Mandarin (CJK Unified Ideographs)
   const hasChineseChars = /[\u4e00-\u9fa5\u3400-\u4dbf]/.test(trimmed);
 
   return {
@@ -65,7 +66,53 @@ export async function parseTextDocumentViaFileAPI(file: File): Promise<{
 }
 
 /**
- * Ekstraksi teks dari berbagai format file yang diunggah pengguna (DOCX, TXT, MD, JSON, CSV, PDF)
+ * ⭐ EKSTRAKSI PDF yang BENAR menggunakan pdfjs-dist
+ */
+async function extractTextFromPDF(file: File): Promise<string> {
+  const arrayBuffer = await file.arrayBuffer();
+
+  const pdf = await pdfjsLib.getDocument({
+    data: arrayBuffer,
+    useSystemFonts: true,
+  }).promise;
+
+  let fullText = '';
+
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const textContent = await page.getTextContent();
+
+    let lastY: number | null = null;
+    let pageText = '';
+
+    for (const item of textContent.items as any[]) {
+      if (!item.str) continue;
+
+      const y = item.transform ? item.transform[5] : null;
+
+      // Deteksi ganti baris (Y berubah signifikan)
+      if (lastY !== null && y !== null && Math.abs(lastY - y) > 2) {
+        pageText += '\n';
+      } else if (
+        pageText.length > 0 &&
+        !pageText.endsWith(' ') &&
+        !item.str.startsWith(' ')
+      ) {
+        pageText += ' ';
+      }
+
+      pageText += item.str;
+      lastY = y;
+    }
+
+    fullText += `\n--- Halaman ${i} ---\n${pageText.trim()}\n`;
+  }
+
+  return fullText.replace(/\n{3,}/g, '\n\n').trim();
+}
+
+/**
+ * Ekstraksi teks dari berbagai format file
  */
 export async function extractTextFromFile(file: File): Promise<{
   text: string;
@@ -80,7 +127,7 @@ export async function extractTextFromFile(file: File): Promise<{
   const sizeKb = Math.round(file.size / 1024);
   const sizeStr = sizeKb > 1024 ? `${(sizeKb / 1024).toFixed(1)} MB` : `${Math.max(1, sizeKb)} KB`;
 
-  // Dokumen teks murni & Markdown: Gunakan browser File API langsung
+  // Teks murni & Markdown
   if (['txt', 'md', 'markdown', 'text', 'json', 'csv', 'tsv'].includes(extension)) {
     return await parseTextDocumentViaFileAPI(file);
   }
@@ -93,36 +140,37 @@ export async function extractTextFromFile(file: File): Promise<{
       const result = await mammoth.extractRawText({ arrayBuffer });
       extractedText = result.value || '';
     } catch (err: any) {
-      throw new Error(`Gagal membaca file Word .docx: ${err?.message || 'Format tidak didukung'}`);
+      throw new Error(`Gagal membaca file .docx: ${err?.message || 'Format tidak didukung'}`);
     }
   } else if (extension === 'pdf') {
-    // Untuk file PDF sederhana atau jika text plain dapat dibaca
+    // ⭐ FIX: Gunakan pdfjs-dist, BUKAN file.text()
     try {
-      const raw = await file.text();
-      // Bersihkan karakter aneh jika teks murni
-      const clean = raw.replace(/[^\x20-\x7E\s\u4e00-\u9fa5]/g, ' ').replace(/\s+/g, ' ').trim();
-      if (clean.length > 50) {
-        extractedText = clean;
-      } else {
-        throw new Error('PDF terenkripsi atau berbasis gambar pindai (scan). Mohon gunakan format dokumen teks .txt, Markdown .md, atau Word .docx.');
+      extractedText = await extractTextFromPDF(file);
+
+      if (!extractedText || extractedText.replace(/--- Halaman \d+ ---/g, '').trim().length < 20) {
+        throw new Error(
+          'PDF tidak memiliki teks yang bisa diekstrak. Kemungkinan PDF hasil scan (gambar). ' +
+          'Solusi: gunakan PDF dengan teks, atau convert ke .txt/.docx dulu.'
+        );
       }
     } catch (e: any) {
-      throw new Error(e.message || 'File PDF tidak dapat diekstrak secara langsung. Disarankan mengunggah format teks .txt, .md, atau .docx.');
+      throw new Error(e.message || 'Gagal membaca file PDF.');
     }
   } else {
-    // Coba fallback dengan File API
+    // Fallback
     try {
       const parsed = await parseTextDocumentViaFileAPI(file);
       return parsed;
     } catch {
-      throw new Error(`Format .${extension} belum didukung. Silakan gunakan format teks .txt, .md (Markdown), atau .docx.`);
+      throw new Error(
+        `Format .${extension} belum didukung. Gunakan .txt, .md, .docx, atau .pdf.`
+      );
     }
   }
 
-  // Bersihkan whitespace berlebihan
   const trimmed = extractedText.trim();
   if (!trimmed) {
-    throw new Error('Dokumen yang diunggah kosong atau teks tidak dapat terbaca.');
+    throw new Error('Dokumen kosong atau teks tidak dapat terbaca.');
   }
 
   const hasChineseChars = /[\u4e00-\u9fa5\u3400-\u4dbf]/.test(trimmed);
@@ -139,7 +187,7 @@ export async function extractTextFromFile(file: File): Promise<{
 }
 
 /**
- * Simpan dokumen baru ke dalam database IndexedDB pengetahuan AI
+ * Simpan dokumen ke Dexie
  */
 export async function simpanDokumenReferensi(data: {
   judul: string;
@@ -179,21 +227,17 @@ export async function simpanDokumenReferensi(data: {
 }
 
 /**
- * Ambil cuplikan ringkasan pengetahuan AI yang relevan dengan mata pelajaran saat ini
- * untuk diinjeksikan langsung ke dalam prompt AI (In-Context RAG Offline).
+ * Ambil konteks AI dari dokumen yang aktif
  */
 export async function getActiveKnowledgeContext(targetMataPelajaran?: string): Promise<string> {
   try {
     const allDocs = await db.dokumen_referensi.toArray();
-    const activeDocs = allDocs.filter(d => d.isAktif);
+    const activeDocs = allDocs.filter((d) => d.isAktif);
 
-    if (activeDocs.length === 0) {
-      return '';
-    }
+    if (activeDocs.length === 0) return '';
 
-    // Urutkan prioritas: dokumen yang mata pelajarannya cocok terlebih dahulu, lalu 'Semua Mapel' / umum
     const normalizedTarget = (targetMataPelajaran || '').toLowerCase().trim();
-    const relevantDocs = activeDocs.filter(d => {
+    const relevantDocs = activeDocs.filter((d) => {
       const docMapel = (d.mataPelajaran || '').toLowerCase().trim();
       if (!targetMataPelajaran) return true;
       if (docMapel === 'semua mapel' || docMapel === 'umum') return true;
@@ -207,19 +251,21 @@ export async function getActiveKnowledgeContext(targetMataPelajaran?: string): P
 
     const docsToUse = relevantDocs.length > 0 ? relevantDocs : activeDocs.slice(0, 3);
 
-    let output = `\n\n=== [DOKUMEN PEDOMAN KURIKULUM & MATERI YANG TELAH DIAJARKAN/DIUNGGAH OLEH GURU] ===\n`;
-    output += `PENTING: Guru telah membekali Anda dengan dokumen referensi kurikulum dan bahan ajar lokal berikut ini. Anda WAJIB membaca, memahami, dan memprioritaskan pedoman, kaidah, kosakata (termasuk Hanzi, Pinyin, dan nada jika Bahasa Mandarin), dan format yang ada dalam dokumen ini:\n\n`;
+    let output = `\n\n=== [DOKUMEN PEDOMAN KURIKULUM & MATERI DARI GURU] ===\n`;
+    output += `PENTING: Guru telah membekali Anda dengan dokumen referensi berikut. Anda WAJIB membaca, memahami, dan memprioritaskan isinya:\n\n`;
 
     docsToUse.forEach((doc, idx) => {
-      // Ambil hingga 2500 karakter per dokumen agar tidak membebani token tetapi mencukupi kebutuhan konteks
-      const snippet = doc.kontenTeks.length > 2500 ? doc.kontenTeks.slice(0, 2500) + '\n...[bagian lanjutan disingkat]...' : doc.kontenTeks;
-      output += `[Dokumen ${idx + 1}: ${doc.judul} (Mapel: ${doc.mataPelajaran} | Tipe: ${doc.kategori})]\n${snippet}\n\n`;
+      const snippet =
+        doc.kontenTeks.length > 2500
+          ? doc.kontenTeks.slice(0, 2500) + '\n...[dipotong]...'
+          : doc.kontenTeks;
+      output += `[Dokumen ${idx + 1}: ${doc.judul} (Mapel: ${doc.mataPelajaran})]\n${snippet}\n\n`;
     });
 
-    output += `=== [AKHIR DOKUMEN PEDOMAN GURU] ===\n\n`;
+    output += `=== [AKHIR DOKUMEN] ===\n\n`;
     return output;
   } catch (err) {
-    console.warn('Gagal memuat dokumen referensi AI:', err);
+    console.warn('Gagal memuat dokumen referensi:', err);
     return '';
   }
 }

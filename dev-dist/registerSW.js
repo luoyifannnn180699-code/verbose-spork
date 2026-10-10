@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) navigator.serviceWorker.register('/verbose-spork/dev-sw.js?dev-sw', { scope: '/verbose-spork/', type: 'classic' })
