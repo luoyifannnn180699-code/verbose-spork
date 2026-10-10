@@ -1,15 +1,30 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { HskWord } from '../../types/hsk';
 import { HskWordCard } from './HskWordCard';
 import { HskFilterBar } from './HskFilterBar';
-import hskData from '../../data/hskVocabulary.json';
 
 export function KamusHskView() {
+  const [words, setWords] = useState<HskWord[]>([]);
+  const [loading, setLoading] = useState(true);
   const [level, setLevel] = useState<string>('all');
   const [search, setSearch] = useState<string>('');
 
-  const words = hskData as unknown as HskWord[];
+  useEffect(() => {
+    fetch('/hskVocabulary.json')
+      .then((res) => {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then((data: HskWord[]) => {
+        setWords(data);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Gagal load hskVocabulary.json:', err);
+        setLoading(false);
+      });
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -34,6 +49,14 @@ export function KamusHskView() {
     estimateSize: () => 88,
     overscan: 12,
   });
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto p-8 text-center text-slate-500">
+        Memuat kamus HSK... (11.000+ kata)
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
