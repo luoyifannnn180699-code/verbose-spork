@@ -3,12 +3,16 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import type { HskWord } from '../../types/hsk';
 import { HskWordCard } from './HskWordCard';
 import { HskFilterBar } from './HskFilterBar';
+import { FlashcardHsk } from './FlashcardHsk';
+
+type Mode = 'list' | 'flashcard';
 
 export function KamusHskView() {
   const [words, setWords] = useState<HskWord[]>([]);
   const [loading, setLoading] = useState(true);
   const [level, setLevel] = useState<string>('all');
   const [search, setSearch] = useState<string>('');
+  const [mode, setMode] = useState<Mode>('list');
 
   useEffect(() => {
     fetch(import.meta.env.BASE_URL + 'hskVocabulary.json')
@@ -60,6 +64,30 @@ export function KamusHskView() {
 
   return (
     <div className="max-w-4xl mx-auto">
+      {/* ⭐ Toggle Mode */}
+      <div className="flex items-center gap-2 mb-3">
+        <button
+          onClick={() => setMode('list')}
+          className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
+            mode === 'list'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+        >
+          📖 Daftar
+        </button>
+        <button
+          onClick={() => setMode('flashcard')}
+          className={`px-4 py-2 rounded-lg text-sm font-bold transition ${
+            mode === 'flashcard'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+          }`}
+        >
+          🎴 Latihan Flashcard
+        </button>
+      </div>
+
       <HskFilterBar
         level={level}
         setLevel={setLevel}
@@ -68,36 +96,42 @@ export function KamusHskView() {
         total={filtered.length}
       />
 
-      <div
-        ref={parentRef}
-        className="h-[70vh] overflow-auto bg-white rounded-lg mt-3 border border-slate-200"
-      >
+      {mode === 'list' ? (
         <div
-          style={{
-            height: `${rowVirtualizer.getTotalSize()}px`,
-            position: 'relative',
-          }}
+          ref={parentRef}
+          className="h-[70vh] overflow-auto bg-white rounded-lg mt-3 border border-slate-200"
         >
-          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const word = filtered[virtualRow.index];
-            return (
-              <div
-                key={word.simplified + '-' + virtualRow.index}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`,
-                }}
-              >
-                <HskWordCard word={word} />
-              </div>
-            );
-          })}
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              position: 'relative',
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const word = filtered[virtualRow.index];
+              return (
+                <div
+                  key={word.simplified + '-' + virtualRow.index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: `${virtualRow.size}px`,
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  <HskWordCard word={word} />
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="mt-3">
+          <FlashcardHsk words={filtered} onExit={() => setMode('list')} />
+        </div>
+      )}
     </div>
   );
 }
