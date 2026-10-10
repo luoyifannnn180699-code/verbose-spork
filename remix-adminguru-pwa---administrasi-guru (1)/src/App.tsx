@@ -14,9 +14,21 @@ import { KnowledgeBaseModal } from './components/KnowledgeBase/KnowledgeBaseModa
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { NotificationToast } from './components/NotificationToast';
 import { getActiveAIConfig } from './utils/aiEngine';
+// ⭐ BARU: import halaman Kamus HSK
+import { KamusHskView } from './components/KamusHsk/KamusHskView';
+
+// ⭐ BARU: tipe tab diperluas dengan 'kamus_hsk'
+type AppTab =
+  | 'modul_ajar'
+  | 'bank_soal'
+  | 'prota_prosem'
+  | 'backup_restore'
+  | 'ai_asisten'
+  | 'kamus_hsk';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'modul_ajar' | 'bank_soal' | 'prota_prosem' | 'backup_restore' | 'ai_asisten'>('modul_ajar');
+  // ⭐ BARU: activeTab pakai tipe AppTab
+  const [activeTab, setActiveTab] = useState<AppTab>('modul_ajar');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
   const [isKnowledgeBaseOpen, setIsKnowledgeBaseOpen] = useState(false);
@@ -59,11 +71,13 @@ export default function App() {
     }, 4000);
   };
 
-  const isAIReady = aiConfig.provider === 'free_pollinations' || Boolean(apiKey && apiKey.trim());
+  const isAIReady =
+    aiConfig.provider === 'free_pollinations' ||
+    Boolean(apiKey && apiKey.trim());
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
-      {/* Top Navbar & 4 Main Navigation Tabs */}
+      {/* Top Navbar & 5 Main Navigation Tabs */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -111,9 +125,7 @@ export default function App() {
 
         {/* Tab 4: Backup & Restore */}
         {activeTab === 'backup_restore' && (
-          <BackupRestoreView
-            onNotify={showNotification}
-          />
+          <BackupRestoreView onNotify={showNotification} />
         )}
 
         {/* Tab 5: AI Asisten Guru */}
@@ -126,13 +138,17 @@ export default function App() {
             onNavigateToTab={(tab) => setActiveTab(tab)}
           />
         )}
+
+        {/* ⭐ BARU: Tab 6: Kamus HSK 1-9 */}
+        {activeTab === 'kamus_hsk' && <KamusHskView />}
       </main>
 
       {/* Footer Info */}
       <footer className="border-t border-slate-200 bg-white/70 py-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p>
-            Portal Administrasi Guru &copy; {new Date().getFullYear()} &bull; Aplikasi Berbasis Dexie.js (IndexedDB) 100% Offline-First.
+            Portal Administrasi Guru &copy; {new Date().getFullYear()} &bull;
+            Aplikasi Berbasis Dexie.js (IndexedDB) 100% Offline-First.
           </p>
           <div className="flex items-center gap-3 text-slate-400">
             <span>Kurikulum Merdeka</span>
@@ -142,6 +158,8 @@ export default function App() {
             <span>GuruPintar AI Asisten</span>
             <span>&bull;</span>
             <span>Ekspor Word (.docx)</span>
+            <span>&bull;</span>
+            <span>Kamus HSK 1-9</span>
             <span>&bull;</span>
             <span>PWA Offline</span>
           </div>
@@ -187,7 +205,9 @@ export default function App() {
         isOpen={isKnowledgeBaseOpen}
         onClose={() => setIsKnowledgeBaseOpen(false)}
         onNotify={showNotification}
-        defaultMataPelajaran={activeProfile?.mataPelajaranUtama || 'Bahasa Mandarin'}
+        defaultMataPelajaran={
+          activeProfile?.mataPelajaranUtama || 'Bahasa Mandarin'
+        }
       />
     </div>
   );
