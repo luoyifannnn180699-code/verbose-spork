@@ -11,13 +11,24 @@ import {
   Key,
   CheckCircle2,
   Brain,
+  Languages, // ⭐ BARU: ikon Kamus HSK
 } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 import type { TeacherProfile } from '../db';
 
+// ⭐ BARU: tipe AppTab diperluas dengan 'kamus_hsk'
+type AppTab =
+  | 'modul_ajar'
+  | 'bank_soal'
+  | 'prota_prosem'
+  | 'backup_restore'
+  | 'ai_asisten'
+  | 'kamus_hsk';
+
 interface NavbarProps {
-  activeTab: 'modul_ajar' | 'bank_soal' | 'prota_prosem' | 'backup_restore' | 'ai_asisten';
-  setActiveTab: (tab: 'modul_ajar' | 'bank_soal' | 'prota_prosem' | 'backup_restore' | 'ai_asisten') => void;
+  // ⭐ BARU: pakai AppTab, tambah 'kamus_hsk'
+  activeTab: AppTab;
+  setActiveTab: (tab: AppTab) => void;
   onOpenSettings: () => void;
   onOpenApiKeyModal: () => void;
   onOpenKnowledgeBase?: () => void;
@@ -106,7 +117,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         </div>
 
-        {/* 4 Tab Navigasi Utama Sesuai Spesifikasi */}
+        {/* 5 Tab Navigasi Utama + Kamus HSK */}
         <nav className="flex items-center space-x-1 sm:space-x-2 overflow-x-auto py-2 no-scrollbar border-t border-slate-100 sm:border-t-0">
           {/* Tab 1: Modul Ajar / Lesson Plan */}
           <button
@@ -194,6 +205,28 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>5. AI Asisten Guru</span>
             <span className="text-[10px] font-black uppercase bg-amber-400 text-amber-950 px-1.5 py-0.2 rounded-md">
               AI
+            </span>
+          </button>
+
+          {/* ⭐ BARU: Tab 6: Kamus HSK 1-9 */}
+          <button
+            onClick={() => setActiveTab('kamus_hsk')}
+            className={`flex items-center gap-2 px-3.5 py-2 text-xs sm:text-sm font-bold rounded-xl transition whitespace-nowrap cursor-pointer ${
+              activeTab === 'kamus_hsk'
+                ? 'bg-rose-600 text-white shadow-sm'
+                : 'text-rose-700 bg-rose-50 hover:bg-rose-100 hover:text-rose-900 border border-rose-200/60'
+            }`}
+          >
+            <Languages className="w-4 h-4" />
+            <span>6. Kamus HSK</span>
+            <span
+              className={`text-[10px] font-black uppercase px-1.5 py-0.2 rounded-md ${
+                activeTab === 'kamus_hsk'
+                  ? 'bg-white/20 text-white'
+                  : 'bg-rose-200 text-rose-800'
+              }`}
+            >
+              1-9
             </span>
           </button>
         </nav>
