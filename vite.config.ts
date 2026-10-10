@@ -13,8 +13,9 @@ export default defineConfig(() => {
         registerType: 'autoUpdate',
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],
         workbox: {
-        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
-        },
+        maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webmanifest}'],
+      },
         manifest: {
           id: '/',
           name: 'Portal Administrasi Guru Offline',
