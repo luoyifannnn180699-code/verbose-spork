@@ -6,58 +6,29 @@ import { ModulAjarView } from './components/ModulAjar/ModulAjarView';
 import { BankSoalView } from './components/BankSoal/BankSoalView';
 import { ProtaProsemView } from './components/ProtaProsem/ProtaProsemView';
 import { BackupRestoreView } from './components/BackupRestore/BackupRestoreView';
-import { AIAssistantView } from './components/AIAssistant/AIAssistantView';
-import { FloatingAIAssistant } from './components/AIAssistant/FloatingAIAssistant';
 import { SettingsModal } from './components/SettingsModal';
-import { ApiKeyModal } from './components/ApiKeyModal';
-import { KnowledgeBaseModal } from './components/KnowledgeBase/KnowledgeBaseModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { NotificationToast } from './components/NotificationToast';
-import { getActiveAIConfig } from './utils/aiEngine';
-// ⭐ BARU: import halaman Kamus HSK
 import { KamusHskView } from './components/KamusHsk/KamusHskView';
 
-// ⭐ BARU: tipe tab diperluas dengan 'kamus_hsk'
 type AppTab =
   | 'modul_ajar'
   | 'bank_soal'
   | 'prota_prosem'
   | 'backup_restore'
-  | 'ai_asisten'
   | 'kamus_hsk';
 
 export default function App() {
-  // ⭐ BARU: activeTab pakai tipe AppTab
   const [activeTab, setActiveTab] = useState<AppTab>('modul_ajar');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isApiKeyModalOpen, setIsApiKeyModalOpen] = useState(false);
-  const [isKnowledgeBaseOpen, setIsKnowledgeBaseOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Active AI Provider state
-  const [aiConfig, setAiConfig] = useState(() => getActiveAIConfig());
-  const [apiKey, setApiKey] = useState<string>(() => {
-    return getActiveAIConfig().apiKey || '';
-  });
-
-  const handleSaveApiKey = (key: string) => {
-    const updated = getActiveAIConfig();
-    setAiConfig(updated);
-    setApiKey(updated.apiKey || '');
-  };
-
-  const refreshAiConfig = () => {
-    const updated = getActiveAIConfig();
-    setAiConfig(updated);
-    setApiKey(updated.apiKey || '');
-  };
-
-  // Inisialisasi seed contoh data Kurikulum Merdeka jika kosong
+  // Seed data awal Kurikulum Merdeka
   useEffect(() => {
     seedInitialDataIfEmpty().catch(console.error);
   }, []);
 
-  // Live queries dari Dexie IndexedDB
+  // Live queries Dexie
   const totalModul = useLiveQuery(() => db.modul_ajar.count(), []) ?? 0;
   const totalSoal = useLiveQuery(() => db.bank_soal.count(), []) ?? 0;
   const totalProtaProsem = useLiveQuery(() => db.prota_prosem.count(), []) ?? 0;
@@ -71,20 +42,13 @@ export default function App() {
     }, 4000);
   };
 
-  const isAIReady =
-    aiConfig.provider === 'free_pollinations' ||
-    Boolean(apiKey && apiKey.trim());
-
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
-      {/* Top Navbar & 5 Main Navigation Tabs */}
+      {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         onOpenSettings={() => setIsSettingsOpen(true)}
-        onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
-        onOpenKnowledgeBase={() => setIsKnowledgeBaseOpen(true)}
-        hasApiKey={isAIReady}
         profile={activeProfile}
         stats={{
           totalModul,
@@ -93,15 +57,15 @@ export default function App() {
         }}
       />
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Tab 1: Modul Ajar / Lesson Plan */}
+        {/* Tab 1: Modul Ajar */}
         {activeTab === 'modul_ajar' && (
           <ModulAjarView
             onNotify={showNotification}
             profile={activeProfile}
-            apiKey={apiKey}
-            onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
+            apiKey=""
+            onOpenApiKeyModal={() => {}}
           />
         )}
 
@@ -110,8 +74,8 @@ export default function App() {
           <BankSoalView
             onNotify={showNotification}
             profile={activeProfile}
-            apiKey={apiKey}
-            onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
+            apiKey=""
+            onOpenApiKeyModal={() => {}}
           />
         )}
 
@@ -128,22 +92,11 @@ export default function App() {
           <BackupRestoreView onNotify={showNotification} />
         )}
 
-        {/* Tab 5: AI Asisten Guru */}
-        {activeTab === 'ai_asisten' && (
-          <AIAssistantView
-            onNotify={showNotification}
-            profile={activeProfile}
-            apiKey={apiKey}
-            onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
-            onNavigateToTab={(tab) => setActiveTab(tab)}
-          />
-        )}
-
-        {/* ⭐ BARU: Tab 6: Kamus HSK 1-9 */}
+        {/* Tab 5: Kamus HSK */}
         {activeTab === 'kamus_hsk' && <KamusHskView />}
       </main>
 
-      {/* Footer Info */}
+      {/* Footer */}
       <footer className="border-t border-slate-200 bg-white/70 py-4 text-center text-xs text-slate-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p>
@@ -152,10 +105,6 @@ export default function App() {
           </p>
           <div className="flex items-center gap-3 text-slate-400">
             <span>Kurikulum Merdeka</span>
-            <span>&bull;</span>
-            <span>DeepSeek & AI Gratis</span>
-            <span>&bull;</span>
-            <span>Ai 文静 Asisten</span>
             <span>&bull;</span>
             <span>Ekspor Word (.docx)</span>
             <span>&bull;</span>
@@ -166,16 +115,7 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Floating Interactive AI Assistant (Always accessible) */}
-      <FloatingAIAssistant
-        apiKey={apiKey}
-        profile={activeProfile}
-        onOpenApiKeyModal={() => setIsApiKeyModalOpen(true)}
-        onOpenFullAssistantTab={() => setActiveTab('ai_asisten')}
-        onNotify={showNotification}
-      />
-
-      {/* Floating Offline Connectivity Indicator */}
+      {/* Floating Indicators */}
       <OfflineIndicator />
 
       {/* Notification Toast */}
@@ -184,30 +124,11 @@ export default function App() {
         onClose={() => setToastMessage(null)}
       />
 
-      {/* Teacher Profile / Settings Modal */}
+      {/* Teacher Profile Modal */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
         onSaved={showNotification}
-      />
-
-      {/* Gemini API Key Modal */}
-      <ApiKeyModal
-        isOpen={isApiKeyModalOpen}
-        onClose={() => setIsApiKeyModalOpen(false)}
-        apiKey={apiKey}
-        onSave={handleSaveApiKey}
-        onNotify={showNotification}
-      />
-
-      {/* Pusat Referensi & Ajari AI Modal */}
-      <KnowledgeBaseModal
-        isOpen={isKnowledgeBaseOpen}
-        onClose={() => setIsKnowledgeBaseOpen(false)}
-        onNotify={showNotification}
-        defaultMataPelajaran={
-          activeProfile?.mataPelajaranUtama || 'Bahasa Mandarin'
-        }
       />
     </div>
   );
